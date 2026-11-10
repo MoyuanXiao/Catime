@@ -5,6 +5,7 @@
 
 #include "window_procedure/window_message_handlers_internal.h"
 #include "taskbar_monitor.h"
+#include "blackhole_overlay.h"
 #include "config/config_watcher.h"
 #include "drag_scale.h"
 #include "drawing.h"
@@ -94,6 +95,7 @@ LRESULT HandleMainTimerTick(HWND hwnd, WPARAM wp, LPARAM lp) {
 LRESULT HandleDestroy(HWND hwnd, WPARAM wp, LPARAM lp) {
     (void)wp; (void)lp;
     WindowMessageInternal_ResetEditExitRightClickState(hwnd);
+    BlackHoleOverlay_Cancel();
     StopMenuPreviewTrackingForCommand(hwnd);
     CancelPreview(hwnd);
     ShutdownGlobalHotkeys(hwnd);

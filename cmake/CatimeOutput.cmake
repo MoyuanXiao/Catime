@@ -10,6 +10,9 @@ target_link_libraries(catime PRIVATE
     user32
     gdi32
     msimg32
+    d3d11
+    d3dcompiler
+    dxgi
     shlwapi
     advapi32
     powrprof

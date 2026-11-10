@@ -17,6 +17,8 @@ BOOL DialogNotificationInternal_LayoutDisplayControls(
     RECT fontLabel = {0};
     RECT timeEdit = {0};
     RECT check = {0};
+    RECT blackHoleCheck = {0};
+    RECT previewButton = {0};
     RECT radiusSlider = {0};
     RECT opacitySlider = {0};
     RECT fontSlider = {0};
@@ -41,6 +43,12 @@ BOOL DialogNotificationInternal_LayoutDisplayControls(
         !DialogModern_GetChildRect96(layout->hwndDlg,
                                      IDC_DISABLE_NOTIFICATION_CHECK,
                                      layout->dpi, &check) ||
+        !DialogModern_GetChildRect96(layout->hwndDlg,
+                         IDC_NOTIFICATION_BLACK_HOLE_CHECK,
+                         layout->dpi, &blackHoleCheck) ||
+        !DialogModern_GetChildRect96(layout->hwndDlg,
+                         IDC_NOTIFICATION_BLACK_HOLE_PREVIEW,
+                         layout->dpi, &previewButton) ||
         !DialogModern_GetChildRect96(layout->hwndDlg,
                                      IDC_NOTIFICATION_RADIUS_SLIDER,
                                      layout->dpi, &radiusSlider) ||
@@ -113,6 +121,28 @@ BOOL DialogNotificationInternal_LayoutDisplayControls(
                                 checkX, check.top, checkWidth,
                                 check.bottom - check.top);
 
+    int blackHoleWidth = DialogNotificationInternal_MaxWidth(
+        blackHoleCheck.right - blackHoleCheck.left,
+        DialogNotificationInternal_MeasureControlText96(
+            layout, IDC_NOTIFICATION_BLACK_HOLE_CHECK, 28));
+    DialogModern_SetChildRect96(
+        layout->hwndDlg, IDC_NOTIFICATION_BLACK_HOLE_CHECK, layout->dpi,
+        blackHoleCheck.left, blackHoleCheck.top, blackHoleWidth,
+        blackHoleCheck.bottom - blackHoleCheck.top);
+
+    NotificationLayoutContext buttonLayout = *layout;
+    HFONT buttonFont = DialogModern_CreateFont(layout->dpi, 12, FW_SEMIBOLD);
+    if (buttonFont) buttonLayout.measureFont = buttonFont;
+    int previewWidth = DialogNotificationInternal_MaxWidth(
+        previewButton.right - previewButton.left,
+        DialogNotificationInternal_MeasureControlText96(
+            &buttonLayout, IDC_NOTIFICATION_BLACK_HOLE_PREVIEW, 30));
+    if (buttonFont) DeleteObject(buttonFont);
+    DialogModern_SetChildRect96(
+        layout->hwndDlg, IDC_NOTIFICATION_BLACK_HOLE_PREVIEW, layout->dpi,
+        previewButton.left, previewButton.top, previewWidth,
+        previewButton.bottom - previewButton.top);
+
     const int sliderIds[] = {
         IDC_NOTIFICATION_RADIUS_SLIDER,
         IDC_NOTIFICATION_OPACITY_EDIT,
@@ -145,5 +175,9 @@ BOOL DialogNotificationInternal_LayoutDisplayControls(
         *right, checkX + checkWidth + 10);
     *right = DialogNotificationInternal_MaxWidth(
         *right, valueX + (radiusText.right - radiusText.left) + 10);
+    *right = DialogNotificationInternal_MaxWidth(
+        *right, blackHoleCheck.left + blackHoleWidth + 10);
+    *right = DialogNotificationInternal_MaxWidth(
+        *right, previewButton.left + previewWidth + 10);
     return TRUE;
 }

@@ -26,4 +26,5 @@ void InitializeDefaultSnapshot(ConfigSnapshot* snapshot) {
     snapshot->notificationCornerRadius = DEFAULT_NOTIFICATION_CORNER_RADIUS;
     snapshot->notificationFontSize = DEFAULT_NOTIFICATION_FONT_SIZE;
     snapshot->notificationSoundVolume = DEFAULT_NOTIFICATION_VOLUME;
+    snapshot->notificationBlackHoleEnabled = FALSE;
 }

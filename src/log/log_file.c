@@ -148,7 +148,7 @@ BOOL LogFile_Initialize(void) {
             CreateDirectoryW(directory, NULL);
         }
     }
-    return OpenLogFile();
+    return TRUE;
 }
 
 BOOL LogFile_Write(LogLevel level, const char* data, DWORD length) {

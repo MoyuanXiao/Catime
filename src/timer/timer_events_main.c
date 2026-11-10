@@ -4,6 +4,7 @@
  */
 
 #include "timer_events_internal.h"
+#include "blackhole_overlay.h"
 
 BOOL TimerEvents_ShouldRenderMainTimer(void) {
     g_visibleTimerCurrentText[0] = L'\0';
@@ -145,6 +146,7 @@ static BOOL HandleMainTimer(HWND hwnd) {
             if (TimerEvents_IsActivePomodoroTimer()) {
                 pomodoroAdvanced = TimerEvents_HandlePomodoroCompletion(hwnd);
             } else {
+                BlackHoleOverlay_CancelPreview();
                 TimerEvents_HandleCountdownCompletion(hwnd);
             }
             if (pomodoroAdvanced) {

@@ -49,6 +49,8 @@
 #define IDC_NOTIFICATION_TIME_LABEL 2007     /**< Notification timeout label */
 #define IDC_NOTIFICATION_TIME_EDIT 2008      /**< Notification timeout edit */
 #define IDC_DISABLE_NOTIFICATION_CHECK 2050  /**< Disable notifications checkbox */
+#define IDC_NOTIFICATION_BLACK_HOLE_CHECK 2051 /**< Enable black-hole break effect */
+#define IDC_NOTIFICATION_BLACK_HOLE_PREVIEW 2052 /**< Preview black-hole effect */
 #define IDC_NOTIFICATION_OPACITY_LABEL 2009  /**< Notification opacity label */
 #define IDC_NOTIFICATION_OPACITY_EDIT 2010   /**< Notification opacity edit */
 #define IDC_NOTIFICATION_OPACITY_TEXT 2021   /**< Notification opacity text */

@@ -43,6 +43,10 @@ INT_PTR DialogNotificationInternal_OnInit(HWND hwndDlg) {
     CheckDlgButton(
         hwndDlg, IDC_DISABLE_NOTIFICATION_CHECK,
         g_AppConfig.notification.display.disabled ? BST_CHECKED : BST_UNCHECKED);
+    CheckDlgButton(
+        hwndDlg, IDC_NOTIFICATION_BLACK_HOLE_CHECK,
+        g_AppConfig.notification.display.black_hole_enabled
+            ? BST_CHECKED : BST_UNCHECKED);
     EnableWindow(GetDlgItem(hwndDlg, IDC_NOTIFICATION_TIME_EDIT),
                  !g_AppConfig.notification.display.disabled);
 

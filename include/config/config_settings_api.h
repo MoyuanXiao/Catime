@@ -31,7 +31,7 @@ void WriteConfigNotificationVolume(int volume);
 BOOL WriteConfigNotificationSettings(
     const char* timeoutMessage, int timeoutMs, int opacity,
     NotificationType type, int cornerRadius, int fontPercent, BOOL disabled,
-    const char* soundFile, int volume);
+    BOOL blackHoleEnabled, const char* soundFile, int volume);
 BOOL WriteConfigNotificationWindow(int x, int y, int width, int height);
 
 void HotkeyToString(WORD hotkey, char* buffer, size_t bufferSize);

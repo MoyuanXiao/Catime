@@ -5,9 +5,11 @@
 
 #include "dialog/dialog_notification_settings_internal.h"
 #include "audio_player.h"
+#include "blackhole_overlay.h"
 #include "config.h"
 #include "dialog/dialog_common.h"
 #include "dialog/dialog_notification_audio.h"
+#include "language.h"
 #include "log.h"
 #include "utils/string_convert.h"
 #include "../resource/resource.h"
@@ -36,6 +38,8 @@ static void SaveNotificationSettings(
     SYSTEMTIME st = {0};
     BOOL isDisabled = IsDlgButtonChecked(
         hwndDlg, IDC_DISABLE_NOTIFICATION_CHECK) == BST_CHECKED;
+    BOOL blackHoleEnabled = IsDlgButtonChecked(
+        hwndDlg, IDC_NOTIFICATION_BLACK_HOLE_CHECK) == BST_CHECKED;
     int timeoutMs = g_AppConfig.notification.display.timeout_ms;
     if (SendDlgItemMessage(hwndDlg, IDC_NOTIFICATION_TIME_EDIT,
                            DTM_GETSYSTEMTIME, 0, (LPARAM)&st) == GDT_VALID) {
@@ -76,7 +80,8 @@ static void SaveNotificationSettings(
         hwndDlg, IDC_VOLUME_SLIDER, TBM_GETPOS, 0, 0);
     if (!WriteConfigNotificationSettings(
             timeoutMessage, timeoutMs, opacity, notificationType,
-            cornerRadius, fontPercent, isDisabled, soundFile, volume)) {
+            cornerRadius, fontPercent, isDisabled, blackHoleEnabled,
+            soundFile, volume)) {
         Dialog_ShowErrorAndRefocus(hwndDlg, IDC_NOTIFICATION_EDIT1);
         return;
     }
@@ -127,6 +132,20 @@ INT_PTR DialogNotificationInternal_OnCommand(
             hwndDlg, IDC_DISABLE_NOTIFICATION_CHECK) == BST_CHECKED;
         EnableWindow(GetDlgItem(hwndDlg, IDC_NOTIFICATION_TIME_EDIT),
                      !isChecked);
+        return TRUE;
+    }
+
+    if (controlId == IDC_NOTIFICATION_BLACK_HOLE_PREVIEW &&
+        notificationCode == BN_CLICKED) {
+        HWND hwndMain = DialogNotificationInternal_GetParent(hwndDlg);
+        if (!BlackHoleOverlay_StartPreview(hwndMain)) {
+            LOG_WARNING("Failed to start black-hole preview");
+            const wchar_t* message = GetLocalizedString(
+                NULL, L"Could not start the black-hole preview. Another effect may be running, or graphics initialization may have failed.");
+            const wchar_t* title = GetLocalizedString(NULL, L"Error");
+            MessageBoxW(hwndDlg, message, title,
+                        MB_OK | MB_ICONWARNING | MB_TOPMOST);
+        }
         return TRUE;
     }
 
