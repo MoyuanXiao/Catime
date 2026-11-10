@@ -63,6 +63,7 @@ typedef struct {
     int font_size;
     NotificationType type;
     BOOL disabled;
+    BOOL black_hole_enabled;
     int window_x;
     int window_y;
     int window_width;

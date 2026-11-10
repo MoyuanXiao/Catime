@@ -68,6 +68,41 @@ add_test(NAME time_parser COMMAND time_parser_tests)
 include(cmake/CatimeHotkeyTests.cmake)
 include(cmake/CatimePreviewTests.cmake)
 
+add_executable(pomodoro_blackhole_handoff_tests
+    tests/pomodoro_blackhole_handoff_tests.c
+    src/timer/timer_events_pomodoro.c
+)
+target_include_directories(pomodoro_blackhole_handoff_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/timer"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated"
+)
+target_link_libraries(pomodoro_blackhole_handoff_tests PRIVATE user32)
+add_test(NAME pomodoro_blackhole_handoff COMMAND pomodoro_blackhole_handoff_tests)
+
+add_executable(blackhole_preview_lifecycle_tests
+    tests/blackhole_preview_lifecycle_tests.c
+)
+target_include_directories(blackhole_preview_lifecycle_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated"
+)
+target_link_libraries(blackhole_preview_lifecycle_tests PRIVATE user32)
+add_test(NAME blackhole_preview_lifecycle COMMAND blackhole_preview_lifecycle_tests)
+
+add_executable(countdown_blackhole_preview_tests
+    tests/countdown_blackhole_preview_tests.c
+    src/timer/timer_events_main.c
+    src/timer/timer_render_cache.c
+)
+target_include_directories(countdown_blackhole_preview_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/timer"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated"
+)
+target_link_libraries(countdown_blackhole_preview_tests PRIVATE user32)
+add_test(NAME countdown_blackhole_preview COMMAND countdown_blackhole_preview_tests)
+
 add_executable(tray_animation_playback_tests
     tests/tray_animation_playback_tests.c
     src/tray/tray_animation_playback.c
@@ -319,6 +354,8 @@ set(_catime_test_targets
     time_parser_tests
     menu_preview_lifecycle_tests
     hotkey_config_tests
+    pomodoro_blackhole_handoff_tests
+    blackhole_preview_lifecycle_tests
     tray_animation_playback_tests
     tray_animation_selection_tests
     tray_animation_speed_input_tests

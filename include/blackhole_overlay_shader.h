@@ -1,0 +1,115 @@
+#ifndef BLACKHOLE_OVERLAY_SHADER_H
+#define BLACKHOLE_OVERLAY_SHADER_H
+
+/* Disk color and preset ranges are inspired by blackhole-timer; see
+ * THIRD_PARTY_NOTICES.md. The lens and disk geometry are analytic. */
+static const char kBlackHoleShaderPart1[] =
+    "Texture2D snapshot : register(t0);\n"
+    "SamplerState linearClamp : register(s0);\n"
+    "cbuffer BlackHole : register(b0) { float4 scene; float4 monitor; float4 seed; };\n"
+    "struct Output { float4 position : SV_POSITION; float2 uv : TEXCOORD0; };\n"
+    "Output VSMain(uint id : SV_VertexID) {\n"
+    "  float2 p[3] = { float2(-1,-1), float2(-1,3), float2(3,-1) };\n"
+    "  Output o; o.position=float4(p[id],0,1); o.uv=p[id]*float2(.5,-.5)+.5; return o; }\n"
+    "static const float TAU=6.2831853;\n"
+    "float hash21(float2 p) {\n"
+    "  p=frac(p*float2(234.34,435.345)); p+=dot(p,p+34.23); return frac(p.x*p.y); }\n"
+    "float noiseWrap(float2 p,float period) {\n"
+    "  float2 i=floor(p), f=frac(p); f=f*f*(3-2*f);\n"
+    "  float y0=i.y-period*floor(i.y/period), y1=y0+1;\n"
+    "  if(y1>=period) y1-=period;\n"
+    "  float a=lerp(hash21(float2(i.x,y0)),hash21(float2(i.x+1,y0)),f.x);\n"
+    "  float b=lerp(hash21(float2(i.x,y1)),hash21(float2(i.x+1,y1)),f.x);\n"
+    "  return lerp(a,b,f.y); }\n"
+    "float2 rotate2(float2 v,float a) {\n"
+    "  float c=cos(a), s=sin(a); return float2(c*v.x-s*v.y,s*v.x+c*v.y); }\n"
+    "float3 blackbody(float temperature) {\n"
+    "  float t=clamp(temperature,1500,40000)/100;\n"
+    "  float r=t<=66 ? 1 : saturate(1.292936*pow(max(t-60,1e-4),-.1332047));\n"
+    "  float g=t<=66 ? saturate(.3900816*log(t)-.6318414) :\n"
+    "    saturate(1.1298909*pow(max(t-60,1e-4),-.0755148));\n"
+    "  float b=t>=66 ? 1 : (t<=19 ? 0 : saturate(.5432068*log(t-10)-1.1962540));\n"
+    "  return float3(r,g,b); }\n"
+    /* Extend this monitor's edge pixels without sampling a neighboring monitor. */
+    "float3 desktop(float2 pixel) {\n"
+    "  pixel=clamp(pixel,monitor.xy+.5,monitor.xy+monitor.zw-.5);\n"
+    "  return snapshot.SampleLevel(linearClamp,pixel/scene.yz,0).rgb; }\n";
+
+static const char kBlackHoleShaderPart2[] =
+    /* A continuous interpolation between warm, face-on and hot disk looks. */
+    "void look(float time,out float temp,out float incl,out float roll,\n"
+    "          out float outer,out float gain) {\n"
+    "  float a=smoothstep(11,16,time), b=smoothstep(16,21,time);\n"
+    "  float c=smoothstep(21,26,time);\n"
+    "  temp=lerp(5500,3800,a); temp=lerp(temp,6500,b); temp=lerp(temp,18000,c);\n"
+    "  incl=lerp(1.48,.55,a); incl=lerp(incl,.30,b); incl=lerp(incl,1.20,c);\n"
+    "  roll=lerp(.35,-.30,a); roll=lerp(roll,.05,b); roll=lerp(roll,.55,c);\n"
+    "  outer=lerp(2.7,2.2,a); outer=lerp(outer,2.9,b); outer=lerp(outer,3.2,c);\n"
+    "  gain=lerp(1.25,.85,a); gain=lerp(gain,.72,b); gain=lerp(gain,1.05,c); }\n"
+    "float diskBand(float r,float outer) {\n"
+    "  return smoothstep(.94,1.18,r)*(1-smoothstep(outer*.68,outer,r)); }\n"
+    "float diskNoise(float2 q,float r,float time) {\n"
+    "  float turns=atan2(q.y,q.x)/TAU;\n"
+    "  float swirl=r*1.8-time*1.4/pow(max(r,1),1.5);\n"
+    "  float n=noiseWrap(float2(r*5,turns*19+swirl*3),19)*.65+\n"
+    "    noiseWrap(float2(r*2,turns*9+swirl*1.5+7),9)*.35;\n"
+    "  return .38+1.45*n*n; }\n"
+    "float4 PSMain(Output input) : SV_TARGET {\n"
+    "  float time=scene.x, progress=saturate(scene.w);\n"
+    "  float2 pixel=monitor.xy+input.uv*monitor.zw;\n"
+    "  float3 original=desktop(pixel);\n"
+    "  float fade=smoothstep(0,.10,progress)*(1-smoothstep(.90,1,progress));\n"
+    "  if(fade<=0) return float4(original,1);\n"
+    /* Each axis traverses both edges within the 30-second session. */
+    "  float2 phase=float2(seed.x,seed.y)*TAU;\n"
+    "  float2 speed=float2(.30+.06*seed.z,.31+.06*seed.w);\n"
+    "  float2 path=phase+time*speed;\n"
+    "  float2 center=monitor.xy+monitor.zw*(.5+.52*sin(path+\n"
+    "    .22*sin(path.yx*1.37+phase.yx)));\n"
+    "  float scale=min(monitor.z,monitor.w);\n"
+    "  float growth=smoothstep(0,13,time);\n"
+    "  float rh=lerp(.035,.20,growth)*(1+smoothstep(13,17,time)*\n"
+    "    .075*sin(time*.65+seed.z*TAU));\n"
+    "  float2 p=(pixel-center)/scale; float r=length(p);\n"
+    /* One analytic map for the entire screen, with no near/far switch. */
+    "  float lens=rh*rh/(r*r+rh*rh);\n"
+    "  float angle=(.12+.28*lens)*lens*growth;\n"
+    "  float2 warped=rotate2(p,angle)*(1-.22*lens*growth);\n"
+    "  float3 bg=desktop(center+warped*scale);\n"
+    "  float temp,incl,roll,outer,gain; look(time,temp,incl,roll,outer,gain);\n"
+    /* Small per-monitor phase variations leave growth and opacity untouched. */
+    "  temp*=1+.06*sin(time*.13+seed.x*TAU);\n"
+    "  incl=clamp(incl+.035*sin(time*.11+seed.y*TAU),.2,1.5);\n"
+    "  roll+=.05*sin(time*.12+seed.z*TAU);\n"
+    "  outer+=.07*sin(time*.10+seed.w*TAU);\n"
+    "  float2 q=rotate2(p,roll)/rh; float radius=length(q);\n"
+    "  float aa=max(fwidth(radius),.001);\n"
+    "  float shadow=1-smoothstep(1-aa,1+aa,radius);\n"
+    "  float3 color=bg*(1-shadow);\n";
+
+static const char kBlackHoleShaderPart3[] =
+    /* Bound the disk work; the bands vanish before the branch boundary. */
+    "  if(radius<outer+1.0) {\n"
+    "    float flatten=max(cos(incl),.12);\n"
+    "    float2 disk=float2(q.x,q.y/flatten);\n"
+    "    float dr=length(disk);\n"
+    "    float band=diskBand(dr,outer);\n"
+    /* Two softly lensed images bend the far disk above and below the core. */
+    "    float2 arc=float2(q.x,(abs(q.y)-.43)/(.30+.22*flatten));\n"
+    "    float ar=length(arc);\n"
+    "    float arcs=diskBand(ar,outer*.83)*.34*(1-smoothstep(1.8,2.8,radius));\n"
+    "    float foreground=smoothstep(-aa-.04,aa+.04,q.y);\n"
+    "    float visible=band*lerp(1,foreground,shadow)+arcs*(1-shadow);\n"
+    "    if(visible>.0001) {\n"
+    "      float tex=diskNoise(disk,max(dr,1),time);\n"
+    "      float beam=lerp(.58,1.65,saturate(.5+.5*q.x/max(radius,.001)));\n"
+    "      float heat=lerp(1.2,.65,saturate((dr-1)/max(outer-1,.1)));\n"
+    "      float3 light=blackbody(temp*heat*lerp(.8,1.25,beam-0.58));\n"
+    "      color+=1-exp(-light*visible*tex*beam*gain);\n"
+    "    }\n"
+    "    float ring=exp(-abs(radius-1)*42)*(.25+.12*sin(time*.8));\n"
+    "    color+=blackbody(temp)*ring*(1-shadow*.75);\n"
+    "  }\n"
+    "  return float4(lerp(original,saturate(color),fade),1); }\n";
+
+#endif /* BLACKHOLE_OVERLAY_SHADER_H */

@@ -7,6 +7,11 @@
 #include <wchar.h>
 
 #include "timer_events_internal.h"
+#include "blackhole_overlay.h"
+
+static BOOL IsPomodoroWorkInterval(int index) {
+    return index >= 0 && (index % 2) == 0;
+}
 
 BOOL TimerEvents_AdvancePomodoroState(void) {
     if (pomodoro_initial_times_count == 0) {
@@ -21,6 +26,10 @@ BOOL TimerEvents_AdvancePomodoroState(void) {
             return FALSE;
         }
     }
+
+    current_pomodoro_phase = IsPomodoroWorkInterval(
+        current_pomodoro_time_index)
+        ? POMODORO_PHASE_WORK : POMODORO_PHASE_BREAK;
 
     return TRUE;
 }
@@ -110,6 +119,7 @@ BOOL TimerEvents_HandlePomodoroCompletion(HWND hwnd) {
                            currentCycle, stepInCycle);
 
     if (!TimerEvents_AdvancePomodoroState()) {
+        BlackHoleOverlay_CancelPreview();
         ShowNotification(hwnd, completionMsg);
         TimerEvents_ResetTimerState(0);
         ResetPomodoroState();
@@ -127,8 +137,14 @@ BOOL TimerEvents_HandlePomodoroCompletion(HWND hwnd) {
         return FALSE;
     }
 
-    ShowNotification(hwnd, completionMsg);
-    PlayNotificationSound(hwnd);
+    BOOL deferCompletion = IsPomodoroWorkInterval(completedIndex) &&
+        !IsPomodoroWorkInterval(current_pomodoro_time_index) &&
+        g_AppConfig.notification.display.black_hole_enabled;
+    if (!deferCompletion || !BlackHoleOverlay_Start(hwnd, completionMsg)) {
+        BlackHoleOverlay_CancelPreview();
+        ShowNotification(hwnd, completionMsg);
+        PlayNotificationSound(hwnd);
+    }
 
     /* Preserve the absolute deadline so notification work introduces no drift. */
     int nextDurationSec =

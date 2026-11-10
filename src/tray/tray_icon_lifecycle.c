@@ -109,8 +109,6 @@ void RecreateTaskbarIcon(HWND hwnd, HINSTANCE hInstance) {
         oldTrayItemDeleted = Shell_NotifyIconW(NIM_DELETE, &deleteData);
         if (!oldTrayItemDeleted) {
             DWORD deleteError = GetLastError();
-            LOG_WARNING("Failed to remove old tray icon before recreation: "
-                        "hwnd=0x%p error=%lu", oldTrayHwnd, deleteError);
             /* Explorer can time out while it is rebuilding the notification
              * area after resume.  Do not issue NIM_ADD against that half-ready
              * state: keep the stable identity and let the retry timer try the
@@ -121,6 +119,8 @@ void RecreateTaskbarIcon(HWND hwnd, HINSTANCE hInstance) {
                 RefreshTrayBackgroundWorkState();
                 return;
             }
+            LOG_WARNING("Failed to remove old tray icon before recreation: "
+                        "hwnd=0x%p error=%lu", oldTrayHwnd, deleteError);
         }
     }
     if (oldTrayItemDeleted) {

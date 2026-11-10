@@ -59,10 +59,11 @@ typedef struct {
 /**
  * @brief Initialize logging system with diagnostic output
  * 
- * Creates log file, writes system information header, and sets up rotation.
+ * Resolves the log path and prepares rotation. The file is created on the
+ * first retained record, which is warning level or higher.
  * Safe to call multiple times (idempotent).
  * 
- * @return TRUE on success, FALSE if log file creation failed
+ * @return TRUE on success, FALSE if the log path cannot be resolved
  */
 BOOL InitializeLogSystem(void);
 

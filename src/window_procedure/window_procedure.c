@@ -13,6 +13,7 @@
 #include "timer/timer_events.h"
 #include "timer/main_timer.h"
 #include "audio_player.h"
+#include "blackhole_overlay.h"
 #include "window.h"
 #include "pomodoro.h"
 #include "notification.h"
@@ -88,6 +89,11 @@ static LRESULT HandlePluginNotifyMessage(HWND hwnd, WPARAM wp, LPARAM lp) {
     PluginData_ProcessPendingNotification(hwnd);
     return 0;
 }
+static LRESULT HandleBlackHoleCompleteMessage(HWND hwnd, WPARAM wp, LPARAM lp) {
+    (void)wp;
+    BlackHoleOverlay_HandleCompletion(hwnd, lp);
+    return 0;
+}
 typedef LRESULT (*MessageHandler)(HWND hwnd, WPARAM wp, LPARAM lp);
 typedef struct {
     UINT msg;
@@ -151,10 +157,15 @@ static const MessageDispatchEntry MESSAGE_DISPATCH_TABLE[] = {
     {WM_PLUGIN_SECURITY_REQUEST, HandlePluginSecurityRequest},
     {WM_PLUGIN_OPERATION_COMPLETE, HandlePluginOperationComplete},
     {WM_PLUGIN_NOTIFY, HandlePluginNotifyMessage},
+    {WM_APP_BLACK_HOLE_COMPLETE, HandleBlackHoleCompleteMessage},
     {0, NULL}
 };
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
+    if (BlackHoleOverlay_IsActive() &&
+        (msg == WM_COMMAND || msg == WM_HOTKEY || msg == WM_APP_QUICK_COUNTDOWN_INDEX)) {
+        return 0;
+    }
     if (msg == WM_TASKBARCREATED) {
         RecreateTaskbarIcon(hwnd, GetModuleHandle(NULL));
         TaskbarMonitor_OnTaskbarCreated();

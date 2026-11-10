@@ -193,7 +193,8 @@ void WriteConfigNotificationSound(const char* soundFile) {
 BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
                                      int opacity, NotificationType type,
                                      int cornerRadius, int fontPercent, BOOL disabled,
-                                     const char* soundFile, int volume) {
+                                     BOOL blackHoleEnabled, const char* soundFile,
+                                     int volume) {
     if (!timeoutMessage) timeoutMessage = "";
     if (timeoutMs < 0) timeoutMs = 0;
     if (opacity < MIN_VISIBLE_OPACITY) opacity = MIN_VISIBLE_OPACITY;
@@ -214,6 +215,7 @@ BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
         type = NOTIFICATION_TYPE_CATIME;
     }
     disabled = disabled ? TRUE : FALSE;
+    blackHoleEnabled = blackHoleEnabled ? TRUE : FALSE;
     if (volume < 0) volume = 0;
     if (volume > 100) volume = 100;
     char timeoutStr[32];
@@ -234,6 +236,7 @@ BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
                                       soundConfigValue, sizeof(soundConfigValue));
     const char* typeStr = EnumToString(NOTIFICATION_TYPE_MAP, type, "CATIME");
     const char* disabledStr = disabled ? "TRUE" : "FALSE";
+    const char* blackHoleEnabledStr = blackHoleEnabled ? "TRUE" : "FALSE";
     BOOL runtimeMatches =
         strcmp(g_AppConfig.notification.messages.timeout_message, timeoutMessage) == 0 &&
         g_AppConfig.notification.display.timeout_ms == timeoutMs &&
@@ -242,6 +245,7 @@ BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
         g_AppConfig.notification.display.font_size == fontPercent &&
         g_AppConfig.notification.display.type == type &&
         g_AppConfig.notification.display.disabled == disabled &&
+        g_AppConfig.notification.display.black_hole_enabled == blackHoleEnabled &&
         strcmp(g_AppConfig.notification.sound.sound_file, cleanSoundPath) == 0 &&
         g_AppConfig.notification.sound.volume == volume;
     char config_path[MAX_PATH];
@@ -254,6 +258,7 @@ BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
         NotificationIniValueMatches(config_path, "NOTIFICATION_FONT_SIZE", fontPercentStr) &&
         NotificationIniValueMatches(config_path, "NOTIFICATION_TYPE", typeStr) &&
         NotificationIniValueMatches(config_path, "NOTIFICATION_DISABLED", disabledStr) &&
+        NotificationIniValueMatches(config_path, "NOTIFICATION_BLACK_HOLE_ENABLED", blackHoleEnabledStr) &&
         NotificationIniValueMatches(config_path, "NOTIFICATION_SOUND_FILE", soundConfigValue) &&
         NotificationIniValueMatches(config_path, "NOTIFICATION_SOUND_VOLUME", volumeStr)) {
         return TRUE;
@@ -266,6 +271,7 @@ BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
         {INI_SECTION_NOTIFICATION, "NOTIFICATION_FONT_SIZE", fontPercentStr},
         {INI_SECTION_NOTIFICATION, "NOTIFICATION_TYPE", typeStr},
         {INI_SECTION_NOTIFICATION, "NOTIFICATION_DISABLED", disabledStr},
+        {INI_SECTION_NOTIFICATION, "NOTIFICATION_BLACK_HOLE_ENABLED", blackHoleEnabledStr},
         {INI_SECTION_NOTIFICATION, "NOTIFICATION_SOUND_FILE", soundConfigValue},
         {INI_SECTION_NOTIFICATION, "NOTIFICATION_SOUND_VOLUME", volumeStr},
     };
@@ -281,6 +287,7 @@ BOOL WriteConfigNotificationSettings(const char* timeoutMessage, int timeoutMs,
     g_AppConfig.notification.display.font_size = fontPercent;
     g_AppConfig.notification.display.type = type;
     g_AppConfig.notification.display.disabled = disabled;
+    g_AppConfig.notification.display.black_hole_enabled = blackHoleEnabled;
     strncpy(g_AppConfig.notification.sound.sound_file, cleanSoundPath,
             sizeof(g_AppConfig.notification.sound.sound_file) - 1);
     g_AppConfig.notification.sound.sound_file[sizeof(g_AppConfig.notification.sound.sound_file) - 1] = '\0';

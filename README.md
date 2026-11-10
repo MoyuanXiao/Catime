@@ -59,7 +59,9 @@
 </div>
 
 
+## 🕳️ Optional black-hole overlay
 
+After a Pomodoro work interval finishes, Catime can show an optional desktop black-hole overlay before the usual completion notification. The effect stays off until you enable **Black-hole effect after Pomodoro work** in notification settings. **Preview black hole** in the same dialog plays it without waiting for the timer. Shader attribution is in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 
 ## 🎨 Powerful Tray Animations

@@ -15,7 +15,7 @@
 static const char* const LOG_LEVEL_NAMES[LOG_LEVEL_MAX] = {
     "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"
 };
-static volatile LONG g_minimumLogLevel = LOG_LEVEL_INFO;
+static volatile LONG g_minimumLogLevel = LOG_LEVEL_WARNING;
 
 HANDLE GetLogFileHandle(void) {
     return LogFile_GetHandle();

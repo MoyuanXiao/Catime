@@ -51,6 +51,8 @@ LRESULT HandleAppNotificationChanged(HWND hwnd) {
 
     g_AppConfig.notification.display.disabled = ReadConfigBool(
         INI_SECTION_NOTIFICATION, "NOTIFICATION_DISABLED", FALSE);
+    g_AppConfig.notification.display.black_hole_enabled = ReadConfigBool(
+        INI_SECTION_NOTIFICATION, "NOTIFICATION_BLACK_HOLE_ENABLED", FALSE);
 
     g_AppConfig.notification.display.window_x = ReadConfigInt(
         INI_SECTION_NOTIFICATION, "NOTIFICATION_WINDOW_X", -1);

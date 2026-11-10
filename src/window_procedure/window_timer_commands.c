@@ -12,6 +12,7 @@
 #include "timer/timer_events.h"
 #include "timer/main_timer.h"
 #include "audio_player.h"
+#include "blackhole_overlay.h"
 #include "window.h"
 #include "pomodoro.h"
 #include "notification.h"
@@ -130,6 +131,7 @@ void StartQuickCountdownByIndex(HWND hwnd, int index) {
     }
 }
 void CleanupBeforeTimerAction(HWND hwnd) {
+    BlackHoleOverlay_Cancel();
     RestoreWindowVisibility(hwnd);
     ClosePluginSecurityDialog();
     StopNotificationSound();
